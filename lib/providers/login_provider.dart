@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 class LoginProvider extends ChangeNotifier{
-  bool _passwordVisible=false;
+  bool _passwordVisible=true;
   bool _isLogin=false;
   List<String> _docIds=[];
 

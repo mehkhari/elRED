@@ -34,16 +34,18 @@ class _TodoViewState extends State<TodoView> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: ()=>Navigator.push(context, MaterialPageRoute(builder: (context)=>AddNewThing(isEdit: false,id1: "",title1: "",description1: "",dateTime1: ""))),
+        onPressed: ()=>Navigator.push(context, MaterialPageRoute(builder: (context)=>AddNewThing(isEdit: false,id1: "",title1: "",description1: "",dateTime1: ""))).then((value) {setState(() {
+        });}),
         child:const Icon(Icons.add_sharp,size: 35),
       ),
       body: Padding(
         padding: const EdgeInsets.all(15.0),
-        child: StreamBuilder(
-          stream: readUsers(),
+        child: FutureBuilder(
+          future: readUsers().first,
           builder: (context, snapshot) {
             if(snapshot.hasData){
               final users=snapshot.data;
+              debugPrint("List of Id's---->${loginProvider.docIds}");
               return ListView.separated(itemBuilder: (context,index){
                 return InkWell(
                   onTap: ()=>users[index].user==FirebaseAuth.instance.currentUser!.email?Navigator.push(context, MaterialPageRoute(builder: (context)=>AddNewThing(
@@ -55,7 +57,11 @@ class _TodoViewState extends State<TodoView> {
                   ))):null,
                   child: ListTile(
                     leading:InkWell(
-                      onTap: ()=>users[index].user==FirebaseAuth.instance.currentUser!.email?deleteDocument(loginProvider.docIds[index]):null,
+                      onTap: (){
+                        setState(() {
+                          users[index].user==FirebaseAuth.instance.currentUser!.email?deleteDocument(loginProvider.docIds[index]):null;
+                        });
+                      },
                       child: const CircleAvatar(
                         backgroundColor: CustomColors.basic,
                         child: Icon(Icons.delete,color: CustomColors.error,),
@@ -70,7 +76,7 @@ class _TodoViewState extends State<TodoView> {
                 return const Divider();
               }, itemCount: users!.length);
             }else{
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
           }),
         )
@@ -80,7 +86,10 @@ class _TodoViewState extends State<TodoView> {
     FirebaseFirestore.instance.collection("Test").doc(id).delete();
   }
   Stream<List<UserRequest>>readUsers()=>FirebaseFirestore.instance.collection('Test').snapshots().map((snapshot) => snapshot.docs.map((e) {
-    Provider.of<LoginProvider>(context,listen: false).addIds(e.id.toString());
+    var data=Provider.of<LoginProvider>(context,listen: false);
+    if(!data.docIds.contains(e.id.toString())){
+      data.addIds(e.id.toString());
+    }
     return UserRequest.fromJson(e.data());
   }).toList());
 }
